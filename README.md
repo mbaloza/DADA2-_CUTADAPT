@@ -21,6 +21,7 @@ library(Biostrings)
 packageVersion("Biostrings")
 
 path <- "/home/bios1/mbaloza/PS118_Seq/MyData_test/"  ## CHANGE ME to the directory containing the fastq files.
+
 list.files(path)
 
 fnFs <- sort(list.files(path, pattern = "_R1_001.fastq.gz", full.names = TRUE))
@@ -44,8 +45,11 @@ allOrients <- function(primer) {
 }
 
 FWD.orients <- allOrients(FWD)
+
 REV.orients <- allOrients(REV)
+
 FWD.orients
+
 REV.orients
 
 fnFs.filtN <- file.path(path, "filtN", basename(fnFs)) # Put N-filterd files in filtN/ subdirectory
@@ -69,12 +73,16 @@ rbind(FWD.ForwardReads = sapply(FWD.orients, primerHits, fn = fnFs.filtN[[1]]),
 # Remove Primers
 
 cutadapt <- "/home/bios1/mbaloza/.local/bin/cutadapt"  # CHANGE ME to the cutadapt path on your machine
+
 system2(cutadapt, args = "--version") # Run shell commands from R
 
 
 path.cut <- file.path(path, "cutadapt")
+
 if(!dir.exists(path.cut)) dir.create(path.cut)
+
 fnFs.cut <- file.path(path.cut, basename(fnFs))
+
 fnRs.cut <- file.path(path.cut, basename(fnRs))
 
 FWD.RC <- dada2:::rc(FWD)
@@ -103,13 +111,16 @@ rbind(FWD.ForwardReads = sapply(FWD.orients, primerHits, fn = fnFs.cut[[1]]),
 
 
 #Forward and reverse fastq filenames have the format:
+
 cutFs <- sort(list.files(path.cut, pattern = "_R1_001.fastq.gz", full.names = TRUE))
 
 cutRs <- sort(list.files(path.cut, pattern = "_R2_001.fastq.gz", full.names = TRUE))
 
 #Extract sample names, assuming filenames have format:
+
 get.sample.name <- function(fname) strsplit(basename(fname), "_")[[1]][1]
 sample.names <- unname(sapply(cutFs, get.sample.name))
+
 head(sample.names)
 
 # Inspect read quality profiles
@@ -153,6 +164,7 @@ head(mergers[[1]])
 # Construct Sequence Table
 
 seqtab <- makeSequenceTable(mergers)
+
 dim(seqtab)
 
 #Inspect distribution of sequence lengths
@@ -163,7 +175,9 @@ table(nchar(getSequences(seqtab)))
 seqtab.nochim <- removeBimeraDenovo(seqtab, method="consensus", multithread=TRUE, verbose=TRUE)
 
 table(nchar(getSequences(seqtab.nochim)))
+
 dim(seqtab.nochim)
+
 sum(seqtab.nochim)/sum(seqtab)
 
 
@@ -182,10 +196,13 @@ write.table (track, file = "/home/bios1/mbaloza/PS118_Seq/Track_reads.csv", row.
 
 # Assign taxonomy
 unite.ref <- "/home/bios1/mbaloza/PS118_Seq/MyData_test/silva_nr99_v138_train_set.fa.gz"  # CHANGE ME to location on your machine
+
 taxa <- assignTaxonomy(seqtab.nochim, unite.ref, multithread = TRUE, tryRC = TRUE)
 
 taxa.print <- taxa  # Removing sequence rownames for display only
+
 rownames(taxa.print) <- NULL
+
 head(taxa.print)
 
 write.table (taxa.print, file = "/home/bios1/mbaloza/PS118_Seq/Taxa.csv", row.names = F, sep = ",")
@@ -196,8 +213,11 @@ taxa_Sp <- addSpecies(taxa, "/home/bios1/mbaloza/PS118_Seq/MyData_test/silva_spe
 taxa_Sp <- assignTaxonomy(seqtab.nochim, unite.ref, multithread = TRUE, tryRC = TRUE)
 
 taxa_Sp.print <- taxa_Sp  # Removing sequence rownames for display only
+
 rownames(taxa_Sp.print) <- NULL
+
 head(taxa_Sp.print)
+
 write.table (taxa_Sp.print, file = "/home/bios1/mbaloza/PS118_Seq/Taxa_SP.csv", row.names = F, sep = ",")
 
 # Evaluate accuracy
@@ -205,11 +225,15 @@ write.table (taxa_Sp.print, file = "/home/bios1/mbaloza/PS118_Seq/Taxa_SP.csv", 
 rownames(seqtab.nochim) 
 
 unqs.mock <- seqtab.nochim["PS118-2-MUC1-C3-D4",]
+
 unqs.mock <- sort(unqs.mock[unqs.mock>0], decreasing=TRUE) # Drop ASVs absent in the Mock
+
 cat("DADA2 inferred", length(unqs.mock), "sample sequences present in the Mock community.\n")
 
 mock.ref <- getSequences(file.path(path, "HMP_MOCK.v35.fasta"))
+
 match.ref <- sum(sapply(names(unqs.mock), function(x) any(grepl(x, mock.ref))))
+
 cat("Of those,", sum(match.ref), "were exact matches to the expected reference sequences.\n")
 
 
