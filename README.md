@@ -14,10 +14,15 @@ library("devtools")
 devtools::install_github("benjjneb/dada2")
 
 library(dada2)
+
 packageVersion("dada2")
+
 library(ShortRead)
+
 packageVersion("ShortRead")
+
 library(Biostrings)
+
 packageVersion("Biostrings")
 
 path <- "/home/bios1/mbaloza/PS118_Seq/MyData_test/"  ## CHANGE ME to the directory containing the fastq files.
@@ -56,9 +61,7 @@ fnFs.filtN <- file.path(path, "filtN", basename(fnFs)) # Put N-filterd files in 
 
 fnRs.filtN <- file.path(path, "filtN", basename(fnRs))
 
-
 fn <- filterAndTrim(fnFs, fnFs.filtN, fnRs, fnRs.filtN, maxN = 0, multithread = TRUE)
-
 
 primerHits <- function(primer, fn) {
   nhits <- vcountPattern(primer, sread(readFastq(fn)), fixed = FALSE)
@@ -98,6 +101,7 @@ R1.flags <- paste("-g", FWD, "-a", REV.RC)
 R2.flags <- paste("-G", REV, "-A", FWD.RC) 
 
 #Run Cutadapt
+
 for(i in seq_along(fnFs)) {
   system2(cutadapt, args = c(R1.flags, R2.flags, "-n", 2, # -n 2 required to remove FWD and REV from reads
                              "-o", fnFs.cut[i], "-p", fnRs.cut[i], # output files
@@ -119,6 +123,7 @@ cutRs <- sort(list.files(path.cut, pattern = "_R2_001.fastq.gz", full.names = TR
 #Extract sample names, assuming filenames have format:
 
 get.sample.name <- function(fname) strsplit(basename(fname), "_")[[1]][1]
+
 sample.names <- unname(sapply(cutFs, get.sample.name))
 
 head(sample.names)
@@ -138,6 +143,7 @@ filtRs <- file.path(path.cut, "filtered", basename(cutRs))
 out <- filterAndTrim(cutFs, filtFs, cutRs, filtRs, truncLen=c(240,200),
                      maxN=0, maxEE=c(2,2), truncQ=2, rm.phix=TRUE,
                      compress=TRUE, multithread=TRUE) # on windows, set multithread = FALSE
+                     
 head(out)
 
 # Learn the Error Rates
@@ -156,9 +162,11 @@ dadaRs <- dada(filtRs, err=errR, multithread=TRUE)
 
 
 # Merge paired reads
+
 mergers <- mergePairs(dadaFs, filtFs, dadaRs, filtRs, verbose=TRUE)
 
 #Inspect the merger data.frame from the first sample
+
 head(mergers[[1]])
 
 # Construct Sequence Table
@@ -168,6 +176,7 @@ seqtab <- makeSequenceTable(mergers)
 dim(seqtab)
 
 #Inspect distribution of sequence lengths
+
 table(nchar(getSequences(seqtab)))
 
 # Remove chimeras
@@ -184,12 +193,18 @@ sum(seqtab.nochim)/sum(seqtab)
 # Track reads through the pipeline
 
 getN <- function(x) sum(getUniques(x))
+
 track <- cbind(out, sapply(dadaFs, getN), sapply(dadaRs, getN), sapply(mergers, getN), rowSums(seqtab.nochim))
+
 #If processing a single sample, remove the sapply calls: e.g. replace
+
 #sapply(dadaFs, getN) with getN(dadaFs)
+
 colnames(track) <- c("input", "filtered", "denoisedF", "denoisedR", "merged", 
                      "nonchim")
+                     
 rownames(track) <- sample.names
+
 head(track)
 
 write.table (track, file = "/home/bios1/mbaloza/PS118_Seq/Track_reads.csv", row.names = F, sep = ",")
@@ -208,6 +223,7 @@ head(taxa.print)
 write.table (taxa.print, file = "/home/bios1/mbaloza/PS118_Seq/Taxa.csv", row.names = F, sep = ",")
 
 # Assign Species
+
 taxa_Sp <- addSpecies(taxa, "/home/bios1/mbaloza/PS118_Seq/MyData_test/silva_species_assignment_v138.fa.gz")
 
 taxa_Sp <- assignTaxonomy(seqtab.nochim, unite.ref, multithread = TRUE, tryRC = TRUE)
