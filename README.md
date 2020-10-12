@@ -24,11 +24,13 @@ path <- "/home/bios1/mbaloza/PS118_Seq/MyData_test/"  ## CHANGE ME to the direct
 list.files(path)
 
 fnFs <- sort(list.files(path, pattern = "_R1_001.fastq.gz", full.names = TRUE))
+
 fnRs <- sort(list.files(path, pattern = "_R2_001.fastq.gz", full.names = TRUE))
 
 # Identify primers
 
 FWD <- "CCTACGGGNGGCWGCAG"  ## CHANGE ME to your forward primer sequence
+
 REV <- "GACTACHVGGGTATCTAATCC"  ## CHANGE ME...
 
 
@@ -47,6 +49,7 @@ FWD.orients
 REV.orients
 
 fnFs.filtN <- file.path(path, "filtN", basename(fnFs)) # Put N-filterd files in filtN/ subdirectory
+
 fnRs.filtN <- file.path(path, "filtN", basename(fnRs))
 
 
@@ -75,11 +78,17 @@ fnFs.cut <- file.path(path.cut, basename(fnFs))
 fnRs.cut <- file.path(path.cut, basename(fnRs))
 
 FWD.RC <- dada2:::rc(FWD)
+
 REV.RC <- dada2:::rc(REV)
+
 #Trim FWD and the reverse-complement of REV off of R1 (forward reads)
+
 R1.flags <- paste("-g", FWD, "-a", REV.RC) 
+
 #Trim REV and the reverse-complement of FWD off of R2 (reverse reads)
+
 R2.flags <- paste("-G", REV, "-A", FWD.RC) 
+
 #Run Cutadapt
 for(i in seq_along(fnFs)) {
   system2(cutadapt, args = c(R1.flags, R2.flags, "-n", 2, # -n 2 required to remove FWD and REV from reads
@@ -95,6 +104,7 @@ rbind(FWD.ForwardReads = sapply(FWD.orients, primerHits, fn = fnFs.cut[[1]]),
 
 #Forward and reverse fastq filenames have the format:
 cutFs <- sort(list.files(path.cut, pattern = "_R1_001.fastq.gz", full.names = TRUE))
+
 cutRs <- sort(list.files(path.cut, pattern = "_R2_001.fastq.gz", full.names = TRUE))
 
 #Extract sample names, assuming filenames have format:
@@ -105,11 +115,13 @@ head(sample.names)
 # Inspect read quality profiles
 
 plotQualityProfile(cutFs[1:2])
+
 plotQualityProfile(cutRs[1:2])
 
 # Filter and trim
 
 filtFs <- file.path(path.cut, "filtered", basename(cutFs))
+
 filtRs <- file.path(path.cut, "filtered", basename(cutRs))
 
 out <- filterAndTrim(cutFs, filtFs, cutRs, filtRs, truncLen=c(240,200),
@@ -120,6 +132,7 @@ head(out)
 # Learn the Error Rates
 
 errF <- learnErrors(filtFs, multithread = TRUE)
+
 errR <- learnErrors(filtRs, multithread = TRUE)
 
 plotErrors(errF, nominalQ = TRUE)
@@ -179,6 +192,7 @@ write.table (taxa.print, file = "/home/bios1/mbaloza/PS118_Seq/Taxa.csv", row.na
 
 # Assign Species
 taxa_Sp <- addSpecies(taxa, "/home/bios1/mbaloza/PS118_Seq/MyData_test/silva_species_assignment_v138.fa.gz")
+
 taxa_Sp <- assignTaxonomy(seqtab.nochim, unite.ref, multithread = TRUE, tryRC = TRUE)
 
 taxa_Sp.print <- taxa_Sp  # Removing sequence rownames for display only
